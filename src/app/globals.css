@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ─────────────────────────────────────────────── */
+
+:root {
+  /* Background */
+  --color-background: #ffffff;
+  --color-surface: #f8f8fc;
+  --color-surface-raised: #f0f0f8;
+
+  /* Text */
+  --color-text: #0a0a14;
+  --color-text-secondary: #5a5a7a;
+  --color-text-muted: #9090b0;
+
+  /* Border */
+  --color-border: #e0e0f0;
+  --color-border-subtle: #f0f0f8;
+
+  /* Primary (violet) */
+  --color-primary: #6c47ff;
+  --color-primary-hover: #5535e8;
+  --color-primary-foreground: #ffffff;
+  --color-primary-muted: #ede8ff;
+
+  /* Muted */
+  --color-muted: #f0f0f8;
+  --color-muted-foreground: #6060a0;
+
+  /* Accent */
+  --color-accent: #0ea5e9;
+  --color-accent-foreground: #ffffff;
+
+  /* Status */
+  --color-success: #10b981;
+  --color-success-bg: #d1fae5;
+  --color-success-foreground: #065f46;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fef3c7;
+  --color-warning-foreground: #78350f;
+  --color-destructive: #ef4444;
+  --color-destructive-bg: #fee2e2;
+  --color-destructive-foreground: #991b1b;
+
+  /* Radius */
+  --radius: 8px;
+  --radius-sm: 4px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Font */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+.dark {
+  --color-background: #0a0a0f;
+  --color-surface: #12121c;
+  --color-surface-raised: #1a1a28;
+
+  --color-text: #f0f0ff;
+  --color-text-secondary: #9090c0;
+  --color-text-muted: #5050a0;
+
+  --color-border: #2a2a40;
+  --color-border-subtle: #1a1a2c;
+
+  --color-primary: #7c5cff;
+  --color-primary-hover: #9070ff;
+  --color-primary-foreground: #ffffff;
+  --color-primary-muted: #2a1f5c;
+
+  --color-muted: #1e1e30;
+  --color-muted-foreground: #9090c0;
+
+  --color-success: #34d399;
+  --color-success-bg: #052e16;
+  --color-success-foreground: #6ee7b7;
+  --color-warning: #fbbf24;
+  --color-warning-bg: #2d1a00;
+  --color-warning-foreground: #fde68a;
+  --color-destructive: #f87171;
+  --color-destructive-bg: #2d0404;
+  --color-destructive-foreground: #fca5a5;
+}
+
+/* ── Base styles ───────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Custom scrollbar ──────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ── Focus ring ────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── RainbowKit overrides ──────────────────────────────────────── */
+
+[data-rk] {
+  --rk-colors-accentColor: var(--color-primary) !important;
+  --rk-colors-accentColorForeground: var(--color-primary-foreground) !important;
+  --rk-radii-connectButton: var(--radius) !important;
+}
+
+/* ── Utility ───────────────────────────────────────────────────── */
+
+.text-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+}
+
+.dark .glass {
+  background: rgba(10, 10, 20, 0.6);
+}
