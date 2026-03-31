@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme";
 
 export function Navbar() {
   const pathname = usePathname();
+  const { isDark, toggle } = useTheme();
 
   const navLinks = [
     { href: "/app", label: "Agent" },
@@ -55,12 +58,23 @@ export function Navbar() {
           ))}
         </nav>
 
-        {/* Wallet */}
-        <ConnectButton
-          accountStatus="avatar"
-          chainStatus="none"
-          showBalance={false}
-        />
+        {/* Right side: theme toggle + wallet */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggle}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className="p-2 rounded-lg transition-colors hover:bg-[var(--color-muted)]"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          <ConnectButton
+            accountStatus="avatar"
+            chainStatus="none"
+            showBalance={false}
+          />
+        </div>
       </div>
     </header>
   );

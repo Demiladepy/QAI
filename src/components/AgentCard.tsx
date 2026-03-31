@@ -2,9 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { formatTimestamp, formatReputation, truncateAddress, getExplorerTokenUrl } from "@/lib/utils";
+import { formatReputation, truncateAddress } from "@/lib/utils";
 import { AGENT_REGISTRY_ABI } from "@/lib/abis";
-import { getAgentRegistryAddress } from "@/lib/contracts";
+import { getAgentRegistryAddress, getExplorerTokenUrl } from "@/lib/contracts";
 import { useAgent } from "@/hooks/useAgent";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
