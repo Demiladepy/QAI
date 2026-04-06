@@ -1,6 +1,5 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
 
   // Security headers on every response
@@ -41,6 +40,12 @@ const nextConfig: NextConfig = {
       fs: false,
       net: false,
       tls: false,
+    };
+    // Silence optional peer-dep warnings from MetaMask SDK + WalletConnect
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@react-native-async-storage/async-storage": false,
+      "pino-pretty": false,
     };
     return config;
   },

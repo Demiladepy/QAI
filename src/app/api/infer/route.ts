@@ -171,56 +171,9 @@ async function callInference(
     return content;
   }
 
-  // ── Fallback: demo mode ───────────────────────────────────────
-  // Used during local development when 0G Compute is not yet configured.
-  console.warn("[QAI] ZEROG_COMPUTE_ENDPOINT not set — using demo fallback");
-  return generateDemoResponse(userMessage, systemPrompt);
-}
-
-function generateDemoResponse(userMessage: string, systemPrompt: string): string {
-  const isDAO = systemPrompt.includes("governance agent");
-  const msg = userMessage.toLowerCase();
-
-  if (isDAO) {
-    if (msg.includes("100k") || msg.includes("100,000") || msg.includes("allocat")) {
-      return (
-        "⚠️ **Conflict Detected**: This proposal may conflict with Decision #47 (March 2024). " +
-        "The DAO previously voted to freeze all treasury allocations above 50K USDC, " +
-        "requiring a two-thirds supermajority. A standard vote is insufficient for this amount. " +
-        "Recommend reviewing the treasury freeze policy before proceeding."
-      );
-    }
-    if (msg.includes("treasury") || msg.includes("decision")) {
-      return (
-        "Based on governance history: Decision #47 (March 2024) established an emergency treasury " +
-        "freeze requiring supermajority approval for any allocation above 50K USDC. " +
-        "Decision #48 approved a 30K USDC hackathon sponsorship under this threshold. " +
-        "Current policy is active."
-      );
-    }
-    return (
-      "I have reviewed the governance history. No direct conflicts found with recent decisions. " +
-      "The proposal appears consistent with established DAO policy. Recommend standard voting procedure."
-    );
-  }
-
-  // Consumer mode demo responses
-  if (msg.includes("name") || msg.includes("remember") || msg.includes("alex")) {
-    return (
-      "Got it — I've noted that down and it's now part of my memory for our future sessions. " +
-      "I'll remember the context you've shared with me across all our conversations."
-    );
-  }
-  if (msg.includes("defi") || msg.includes("startup") || msg.includes("building")) {
-    return (
-      "That's exciting! DeFi infrastructure on 0G is a strong space right now. " +
-      "I'll keep this context in mind — what specific aspect are you focused on?"
-    );
-  }
-  return (
-    "Understood. I've recorded this to memory and will carry it forward into our future sessions. " +
-    "Is there anything specific you'd like me to help you with right now?"
-  );
+  // ── No compute endpoint configured ───────────────────────────
+  // Return a structured error — never a fake AI response.
+  throw new Error("inference_not_configured: ZEROG_COMPUTE_ENDPOINT is not set. Configure it in .env.local to enable inference.");
 }
 
 // ── Session hash (for MemoryAnchor) ───────────────────────────
@@ -354,15 +307,20 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
   try {
     responseContent = await callInference(systemPrompt, safeMessage);
   } catch (err) {
-    console.error("[/api/infer] Inference failed:", err);
+    const errMsg = (err as Error).message ?? "";
+    const isNotConfigured = errMsg.startsWith("inference_not_configured");
+    console.error("[/api/infer] Inference failed:", errMsg);
     return NextResponse.json(
       {
         content: "",
         sessionId: "",
         memoryWritten: false,
-        error: "Inference service unavailable. Please try again.",
+        error: isNotConfigured
+          ? "Inference not configured. Set ZEROG_COMPUTE_ENDPOINT in .env.local to connect to 0G Compute."
+          : "Inference service unavailable. Please try again.",
+        code: isNotConfigured ? "inference_not_configured" : "inference_error",
       },
-      { status: 503 }
+      { status: isNotConfigured ? 503 : 503 }
     );
   }
 
@@ -432,11 +390,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
         ANCHOR_ABI,
         gatewaySigner
       );
-      const tx = await contract.anchorSession(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tx = await (contract as any).anchorSession(
         BigInt(agentId),
         sessionHash,
         walletAddress
-      );
+      ) as { hash: string };
       anchorTxHash = tx.hash;
     } catch (err) {
       console.error("[/api/infer] On-chain anchor failed:", err);
@@ -462,7 +421,8 @@ function extractEntities(text: string): string[] {
   const entities = new Set<string>();
   for (let i = 1; i < words.length; i++) {
     const word = words[i]?.replace(/[^a-zA-Z]/g, "");
-    if (word && word.length >= 2 && word[0] === word[0].toUpperCase()) {
+    const firstChar = word?.[0];
+    if (word && word.length >= 2 && firstChar && firstChar === firstChar.toUpperCase()) {
       entities.add(word);
     }
   }

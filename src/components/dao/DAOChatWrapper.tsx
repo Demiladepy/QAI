@@ -19,7 +19,7 @@ export function DAOChatWrapper() {
 
   return (
     <div>
-      <p className="text-xs font-semibold mb-2" style={{ color: "var(--color-text-muted)" }}>
+      <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-tertiary)" }}>
         Ask the Governance Agent
       </p>
       <ChatInterface

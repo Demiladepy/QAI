@@ -4,7 +4,7 @@
 // ============================================================
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useAccount } from "wagmi";
 import { getAgentByOwner, getAgentMetadata } from "@/lib/contracts";
 import { useStore } from "@/store";
@@ -12,6 +12,8 @@ import { useStore } from "@/store";
 export function useAgent() {
   const { address, isConnected } = useAccount();
   const { agent, setAgent, clearAgent } = useStore();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   const loadAgent = useCallback(async () => {
     if (!address || !isConnected) {
@@ -19,6 +21,8 @@ export function useAgent() {
       return;
     }
 
+    setIsLoading(true);
+    setIsError(false);
     try {
       const tokenId = await getAgentByOwner(address);
       if (tokenId === 0n) {
@@ -30,13 +34,15 @@ export function useAgent() {
     } catch (err) {
       console.error("[useAgent] Failed to load agent:", err);
       clearAgent();
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
     }
   }, [address, isConnected, setAgent, clearAgent]);
 
-  // Load on mount and when wallet changes
   useEffect(() => {
     void loadAgent();
   }, [loadAgent]);
 
-  return { agent, refetch: loadAgent };
+  return { agent, refetch: loadAgent, isLoading, isError };
 }

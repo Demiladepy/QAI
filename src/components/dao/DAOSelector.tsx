@@ -1,102 +1,54 @@
 "use client";
 
 import { useStore } from "@/store";
-import { MOCK_DAOS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
-import { Users, Wallet } from "lucide-react";
-import type { DAO } from "@/types";
+import { Scale } from "lucide-react";
 
-function formatUSD(amount: number): string {
-  if (amount >= 1_000_000)
-    return `$${(amount / 1_000_000).toFixed(1)}M`;
-  return `$${(amount / 1_000).toFixed(0)}K`;
-}
+// ── Demo DAOs: these represent real protocol integrations.
+// In production, this list would come from a governance registry contract.
+// For the hackathon we seed three known DAOs to show the agent's DAO mode.
+const DEMO_DAOS = [
+  { id: "builderDAO", name: "BuilderDAO", desc: "Open-source developer collective on 0G" },
+  { id: "defiDAO", name: "DefiDAO", desc: "DeFi protocol governance & liquidity" },
+  { id: "protocolDAO", name: "ProtocolDAO", desc: "Core protocol parameters & partnerships" },
+] as const;
 
 export function DAOSelector() {
   const { selectedDAO, setSelectedDAO } = useStore();
 
   return (
-    <div>
-      <p className="text-xs font-medium mb-2" style={{ color: "var(--color-text-muted)" }}>
-        Select a DAO
-      </p>
-      <div className="space-y-2">
-        {MOCK_DAOS.map((dao) => (
-          <DAOItem
-            key={dao.id}
-            dao={dao}
-            isSelected={selectedDAO?.id === dao.id}
-            onSelect={() => setSelectedDAO(dao)}
-          />
-        ))}
+    <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden">
+      <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
+        <p className="text-xs font-mono text-[var(--text-tertiary)] uppercase tracking-widest">
+          Select a DAO
+        </p>
+      </div>
+      <div className="p-2 space-y-1">
+        {DEMO_DAOS.map((dao) => {
+          const isSelected = selectedDAO?.id === dao.id;
+          return (
+            <button
+              key={dao.id}
+              onClick={() => setSelectedDAO({ id: dao.id, name: dao.name, description: dao.desc, memberCount: 0, treasuryUSD: 0 })}
+              className={cn(
+                "w-full text-left rounded-[var(--radius-sm)] p-3 border transition-all duration-150",
+                isSelected
+                  ? "bg-[var(--accent-muted)] border-[var(--accent-border)] text-[var(--accent)]"
+                  : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+              )}
+              aria-pressed={isSelected}
+            >
+              <div className="flex items-center gap-2">
+                <Scale className="w-3.5 h-3.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-semibold font-mono">{dao.name}</p>
+                  <p className="text-xs opacity-70 mt-0.5">{dao.desc}</p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
-  );
-}
-
-function DAOItem({
-  dao,
-  isSelected,
-  onSelect,
-}: {
-  dao: DAO;
-  isSelected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={cn(
-        "w-full text-left rounded-xl p-3 border transition-all",
-        "hover:border-[var(--color-primary)] focus-visible:outline-none"
-      )}
-      style={{
-        background: isSelected
-          ? "var(--color-primary-muted)"
-          : "var(--color-surface)",
-        borderColor: isSelected
-          ? "var(--color-primary)"
-          : "var(--color-border)",
-      }}
-      aria-pressed={isSelected}
-      aria-label={`Select ${dao.name}`}
-    >
-      <div className="flex items-start justify-between mb-1">
-        <span
-          className="text-sm font-semibold"
-          style={{
-            color: isSelected
-              ? "var(--color-primary)"
-              : "var(--color-text)",
-          }}
-        >
-          {dao.name}
-        </span>
-      </div>
-
-      <p
-        className="text-xs line-clamp-2 mb-2"
-        style={{ color: "var(--color-text-muted)" }}
-      >
-        {dao.description}
-      </p>
-
-      <div className="flex items-center gap-3">
-        <span
-          className="flex items-center gap-1 text-xs"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          <Users className="w-3 h-3" />
-          {dao.memberCount.toLocaleString()}
-        </span>
-        <span
-          className="flex items-center gap-1 text-xs"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          <Wallet className="w-3 h-3" />
-          {formatUSD(dao.treasuryUSD)}
-        </span>
-      </div>
-    </button>
   );
 }

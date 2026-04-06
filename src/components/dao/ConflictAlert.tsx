@@ -1,89 +1,41 @@
 "use client";
 
-import { Loader, AlertTriangle, AlertCircle } from "lucide-react";
-import { formatTimestamp } from "@/lib/utils";
+import { AlertTriangle, AlertCircle } from "lucide-react";
 import type { ProposalConflict } from "@/types";
 
 interface ConflictAlertProps {
   conflict: ProposalConflict;
-  isAnalyzing?: boolean;
 }
 
-export function ConflictAlert({ conflict, isAnalyzing }: ConflictAlertProps) {
-  const severityColors = {
-    high: {
-      bg: "var(--color-destructive-bg)",
-      border: "var(--color-destructive)",
-      text: "var(--color-destructive-foreground)",
-      icon: "var(--color-destructive)",
-    },
-    medium: {
-      bg: "var(--color-warning-bg)",
-      border: "var(--color-warning)",
-      text: "var(--color-warning-foreground)",
-      icon: "var(--color-warning)",
-    },
-    low: {
-      bg: "var(--color-primary-muted)",
-      border: "var(--color-primary)",
-      text: "var(--color-primary)",
-      icon: "var(--color-primary)",
-    },
-  };
-
-  const colors = severityColors[conflict.severity];
-
-  if (isAnalyzing) {
-    return (
-      <div
-        className="px-4 py-2.5 flex items-center gap-2 border-b text-xs animate-pulse"
-        style={{
-          background: "var(--color-warning-bg)",
-          borderColor: "var(--color-warning)",
-          color: "var(--color-warning-foreground)",
-        }}
-      >
-        <Loader className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
-        <span>QAI agent is analyzing proposal against governance history...</span>
-      </div>
-    );
-  }
+export function ConflictAlert({ conflict }: ConflictAlertProps) {
+  const isHigh = conflict.severity === "high";
 
   return (
     <div
-      className="px-4 py-3 border-b"
+      className="px-4 py-3 border-b flex items-start gap-3"
       style={{
-        background: colors.bg,
-        borderColor: colors.border,
+        background: isHigh ? "var(--status-error-bg)" : "var(--status-warning-bg)",
+        borderColor: isHigh ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)",
       }}
       role="alert"
       aria-live="polite"
     >
-      <div className="flex items-start gap-2">
-        {conflict.severity === "high" ? (
-          <AlertTriangle
-            className="w-4 h-4 flex-shrink-0 mt-0.5"
-            style={{ color: colors.icon }}
-          />
-        ) : (
-          <AlertCircle
-            className="w-4 h-4 flex-shrink-0 mt-0.5"
-            style={{ color: colors.icon }}
-          />
-        )}
-
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold mb-0.5" style={{ color: colors.text }}>
-            {conflict.severity === "high" ? "Conflict Detected" : "Potential Conflict"}
-          </p>
-          <p className="text-xs leading-relaxed" style={{ color: colors.text }}>
-            {conflict.description}
-          </p>
-          <p className="text-xs mt-1 opacity-75" style={{ color: colors.text }}>
-            Ref: {conflict.relatedDecisionTitle} ·{" "}
-            {formatTimestamp(conflict.relatedDecisionDate).split(",")[0]}
-          </p>
-        </div>
+      {isHigh
+        ? <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[var(--status-error)]" />
+        : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-[var(--status-warning)]" />
+      }
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold font-mono mb-0.5"
+          style={{ color: isHigh ? "var(--status-error)" : "var(--status-warning)" }}>
+          {isHigh ? "Conflict Detected" : "Potential Conflict"}
+        </p>
+        <p className="text-xs leading-relaxed text-[var(--text-secondary)]">
+          {conflict.description}
+        </p>
+        <p className="text-xs mt-1 text-[var(--text-tertiary)] font-mono">
+          Ref: {conflict.relatedDecisionTitle} ·{" "}
+          {new Date(conflict.relatedDecisionDate * 1000).toLocaleDateString("en", { month: "short", year: "numeric" })}
+        </p>
       </div>
     </div>
   );

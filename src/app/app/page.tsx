@@ -1,7 +1,9 @@
 import { Navbar } from "@/components/Navbar";
+import { AppShell } from "@/components/layout/AppShell";
 import { AgentCard } from "@/components/AgentCard";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { MemoryPanel } from "@/components/chat/MemoryPanel";
+import { ConnectionStatus } from "@/components/dashboard/ConnectionStatus";
 
 export const metadata = {
   title: "My Agent — QAI",
@@ -10,40 +12,46 @@ export const metadata = {
 
 export default function AgentPage() {
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--color-background)" }}
-    >
+    <div className="flex flex-col min-h-screen" style={{ background: "var(--bg-root)" }}>
       <Navbar />
-
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-          {/* Sidebar */}
-          <aside className="space-y-4">
+      <AppShell
+        sidebar={
+          <div className="space-y-3">
             <AgentCard />
             <MemoryPanel />
-          </aside>
-
-          {/* Chat */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h1 className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>
-                Agent Chat
-              </h1>
-              <span
-                className="text-xs px-2 py-1 rounded-full"
-                style={{
-                  background: "var(--color-primary-muted)",
-                  color: "var(--color-primary)",
-                }}
-              >
-                Consumer Mode
-              </span>
+            <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
+              <p className="text-xs font-mono text-[var(--text-tertiary)] uppercase tracking-widest mb-3">
+                Connection
+              </p>
+              <ConnectionStatus />
             </div>
-            <ChatInterface />
-          </section>
-        </div>
-      </main>
+          </div>
+        }
+        main={
+          <div className="flex flex-col h-full gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-sm font-semibold font-mono text-[var(--text-primary)]">
+                  Agent Chat
+                </h1>
+                <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                  Consumer mode — sessions anchored on-chain
+                </p>
+              </div>
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono"
+                style={{ background: "var(--accent-muted)", color: "var(--accent)", border: "1px solid var(--accent-border)" }}
+              >
+                <span className="status-dot live" />
+                Consumer Mode
+              </div>
+            </div>
+            <div className="flex-1 min-h-0">
+              <ChatInterface />
+            </div>
+          </div>
+        }
+      />
     </div>
   );
 }

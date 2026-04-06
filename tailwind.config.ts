@@ -10,33 +10,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--color-background)",
-        surface: "var(--color-surface)",
-        border: "var(--color-border)",
+        // Neural Noir palette via CSS vars
+        background: "var(--bg-root)",
+        surface: "var(--bg-surface)",
+        elevated: "var(--bg-elevated)",
+        hover: "var(--bg-hover)",
+        border: "var(--border-default)",
+        accent: {
+          DEFAULT: "var(--accent)",
+          hover: "var(--accent-hover)",
+          muted: "var(--accent-muted)",
+          border: "var(--accent-border)",
+        },
+        text: {
+          primary: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          tertiary: "var(--text-tertiary)",
+        },
+        status: {
+          live: "var(--status-live)",
+          warning: "var(--status-warning)",
+          error: "var(--status-error)",
+        },
+        // Legacy compat
         primary: {
-          DEFAULT: "var(--color-primary)",
-          hover: "var(--color-primary-hover)",
-          foreground: "var(--color-primary-foreground)",
+          DEFAULT: "var(--accent)",
+          hover: "var(--accent-hover)",
+          foreground: "#09090b",
+          muted: "var(--accent-muted)",
         },
         muted: {
-          DEFAULT: "var(--color-muted)",
-          foreground: "var(--color-muted-foreground)",
-        },
-        accent: {
-          DEFAULT: "var(--color-accent)",
-          foreground: "var(--color-accent-foreground)",
+          DEFAULT: "var(--bg-elevated)",
+          foreground: "var(--text-secondary)",
         },
         destructive: {
-          DEFAULT: "var(--color-destructive)",
-          foreground: "var(--color-destructive-foreground)",
+          DEFAULT: "var(--status-error)",
+          foreground: "var(--status-error)",
         },
         success: {
-          DEFAULT: "var(--color-success)",
-          foreground: "var(--color-success-foreground)",
+          DEFAULT: "var(--status-live)",
+          foreground: "var(--status-live)",
         },
         warning: {
-          DEFAULT: "var(--color-warning)",
-          foreground: "var(--color-warning-foreground)",
+          DEFAULT: "var(--status-warning)",
+          foreground: "var(--status-warning)",
         },
       },
       fontFamily: {
@@ -44,14 +61,20 @@ const config: Config = {
         mono: ["var(--font-mono)", "monospace"],
       },
       borderRadius: {
-        DEFAULT: "var(--radius)",
-        sm: "var(--radius-sm)",
-        lg: "var(--radius-lg)",
+        sm: "6px",
+        DEFAULT: "10px",
+        lg: "14px",
+        xl: "20px",
+        full: "9999px",
       },
       animation: {
-        "fade-in": "fadeIn 0.2s ease-in-out",
-        "slide-up": "slideUp 0.2s ease-out",
-        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "fade-in": "fadeIn 0.25s ease-out",
+        "slide-up": "slideUp 0.25s ease-out",
+        "slide-down": "slideDown 0.2s ease-out",
+        "pulse-accent": "pulse-accent 2s ease-in-out infinite",
+        shimmer: "shimmer 1.5s infinite",
+        breathe: "breathe 3s ease-in-out infinite",
+        float: "float 4s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -59,9 +82,34 @@ const config: Config = {
           "100%": { opacity: "1" },
         },
         slideUp: {
-          "0%": { transform: "translateY(8px)", opacity: "0" },
+          "0%": { transform: "translateY(12px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
+        slideDown: {
+          "0%": { transform: "translateY(-8px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        "pulse-accent": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.4" },
+        },
+        breathe: {
+          "0%, 100%": { transform: "scale(1)", opacity: "0.8" },
+          "50%": { transform: "scale(1.05)", opacity: "1" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+      },
+      boxShadow: {
+        accent: "0 0 30px rgba(0, 229, 191, 0.15)",
+        "accent-sm": "0 0 12px rgba(0, 229, 191, 0.1)",
+        glow: "0 8px 32px rgba(0, 0, 0, 0.4)",
       },
     },
   },

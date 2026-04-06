@@ -1,5 +1,6 @@
 // ============================================================
 // QAI — Global client state (Zustand)
+// No mock data — all state fetched from chain or API.
 // ============================================================
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -11,7 +12,18 @@ import type {
   DAO,
 } from "@/types";
 
-// ── Agent slice ───────────────────────────────────────────────
+// ── Connection status ─────────────────────────────────────────
+
+export type ServiceStatus = "connected" | "not_configured" | "error" | "checking";
+
+export interface ConnectionStatus {
+  wallet: "connected" | "disconnected";
+  contracts: "live" | "not_deployed" | "wrong_network" | "checking";
+  inference: ServiceStatus;
+  kvStore: ServiceStatus;
+}
+
+// ── Slice interfaces ──────────────────────────────────────────
 
 interface AgentSlice {
   agent: AgentMetadata | null;
@@ -19,21 +31,21 @@ interface AgentSlice {
   clearAgent: () => void;
 }
 
-// ── Chat slice ────────────────────────────────────────────────
-
 interface ChatSlice {
   messages: Message[];
   isLoading: boolean;
+  streamingContent: string;
   mode: AgentMode;
+  activeSessionId: string | null;
   addMessage: (msg: Message) => void;
   setMessages: (msgs: Message[]) => void;
   setLoading: (loading: boolean) => void;
+  setStreamingContent: (text: string) => void;
   setMode: (mode: AgentMode) => void;
   clearMessages: () => void;
   updateMessageAnchorStatus: (id: string, anchored: boolean) => void;
+  setActiveSessionId: (id: string | null) => void;
 }
-
-// ── Memory panel slice ────────────────────────────────────────
 
 interface MemorySlice {
   recentSessions: SessionData[];
@@ -43,33 +55,45 @@ interface MemorySlice {
   setPanelOpen: (open: boolean) => void;
 }
 
-// ── DAO slice ─────────────────────────────────────────────────
-
 interface DAOSlice {
   selectedDAO: DAO | null;
   setSelectedDAO: (dao: DAO | null) => void;
 }
 
-// ── Combined store ────────────────────────────────────────────
+interface ConnectionSlice {
+  connectionStatus: ConnectionStatus;
+  updateConnectionStatus: (update: Partial<ConnectionStatus>) => void;
+}
 
-type QAIStore = AgentSlice & ChatSlice & MemorySlice & DAOSlice;
+interface UISlice {
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+}
+
+// ── Combined ──────────────────────────────────────────────────
+
+type QAIStore = AgentSlice & ChatSlice & MemorySlice & DAOSlice & ConnectionSlice & UISlice;
 
 export const useStore = create<QAIStore>()(
   persist(
     (set) => ({
-      // ── Agent ────────────────────────────────────────────────
+      // ── Agent
       agent: null,
       setAgent: (agent) => set({ agent }),
       clearAgent: () => set({ agent: null }),
 
-      // ── Chat ─────────────────────────────────────────────────
+      // ── Chat
       messages: [],
       isLoading: false,
+      streamingContent: "",
       mode: "consumer",
+      activeSessionId: null,
       addMessage: (msg) =>
         set((state) => ({ messages: [...state.messages, msg] })),
       setMessages: (messages) => set({ messages }),
       setLoading: (isLoading) => set({ isLoading }),
+      setStreamingContent: (streamingContent) => set({ streamingContent }),
       setMode: (mode) => set({ mode }),
       clearMessages: () => set({ messages: [] }),
       updateMessageAnchorStatus: (id, anchored) =>
@@ -78,26 +102,44 @@ export const useStore = create<QAIStore>()(
             m.id === id ? { ...m, memoryAnchored: anchored } : m
           ),
         })),
+      setActiveSessionId: (activeSessionId) => set({ activeSessionId }),
 
-      // ── Memory ───────────────────────────────────────────────
+      // ── Memory
       recentSessions: [],
       isPanelOpen: false,
       setRecentSessions: (recentSessions) => set({ recentSessions }),
       togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
       setPanelOpen: (isPanelOpen) => set({ isPanelOpen }),
 
-      // ── DAO ──────────────────────────────────────────────────
+      // ── DAO
       selectedDAO: null,
       setSelectedDAO: (selectedDAO) => set({ selectedDAO }),
+
+      // ── Connection
+      connectionStatus: {
+        wallet: "disconnected",
+        contracts: "checking",
+        inference: "checking",
+        kvStore: "checking",
+      },
+      updateConnectionStatus: (update) =>
+        set((state) => ({
+          connectionStatus: { ...state.connectionStatus, ...update },
+        })),
+
+      // ── UI
+      sidebarOpen: true,
+      setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+      toggleSidebar: () =>
+        set((state) => ({ sidebarOpen: !state.sidebarOpen })),
     }),
     {
-      name: "qai-store",
+      name: "qai-store-v2",
       storage: createJSONStorage(() => sessionStorage),
-      // Only persist non-sensitive fields
       partialize: (state) => ({
         mode: state.mode,
         isPanelOpen: state.isPanelOpen,
-        // Do NOT persist messages or agent data — re-fetch from chain on load
+        sidebarOpen: state.sidebarOpen,
       }),
     }
   )

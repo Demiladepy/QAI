@@ -5,8 +5,14 @@ import { useChat } from "@/hooks/useChat";
 import { useStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { Send, CheckCircle, Clock } from "lucide-react";
+import { Send, CheckCircle, Clock, Cpu } from "lucide-react";
 import type { Message } from "@/types";
+
+const PROMPT_SUGGESTIONS = [
+  "Remember: my name is Alex and I'm building a DeFi startup.",
+  "What have we discussed in previous sessions?",
+  "Summarize what you know about me so far.",
+];
 
 interface ChatInterfaceProps {
   daoId?: string;
@@ -20,7 +26,6 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
@@ -29,6 +34,9 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
     const trimmed = input.trim();
     if (!trimmed || isLoading || !agent) return;
     setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     await sendMessage(trimmed, daoId);
   }, [input, isLoading, agent, sendMessage, daoId]);
 
@@ -42,55 +50,62 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
     [handleSend]
   );
 
-  // Auto-resize textarea
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    const textarea = e.target;
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+    const ta = e.target;
+    ta.style.height = "auto";
+    ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
   }, []);
 
   if (!agent) {
     return (
-      <div
-        className="flex flex-col items-center justify-center h-64 rounded-xl border text-center"
-        style={{
-          borderColor: "var(--color-border)",
-          background: "var(--color-surface)",
-        }}
-      >
-        <p className="text-sm font-medium mb-1" style={{ color: "var(--color-text)" }}>
-          Mint your agent first
-        </p>
-        <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-          You need a QAI Agent ID to start chatting
-        </p>
+      <div className="flex flex-col items-center justify-center h-full min-h-64 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-center p-8 animate-fade-in">
+        <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--bg-elevated)] flex items-center justify-center mb-4">
+          <Cpu className="w-6 h-6 text-[var(--text-tertiary)]" />
+        </div>
+        <p className="text-sm font-medium text-[var(--text-primary)] mb-1">Mint your agent first</p>
+        <p className="text-xs text-[var(--text-tertiary)]">You need a QAI Agent ID to start chatting</p>
       </div>
     );
   }
 
   const defaultPlaceholder = daoId
-    ? "Ask about proposals, past decisions, conflicts..."
-    : "Message your agent... (Shift+Enter for new line)";
+    ? "Ask about proposals, past decisions, conflicts…"
+    : "Message your agent… (Enter to send, Shift+Enter for newline)";
 
   return (
-    <div
-      className="flex flex-col rounded-xl border overflow-hidden"
-      style={{
-        borderColor: "var(--color-border)",
-        background: "var(--color-surface)",
-        height: "clamp(420px, 60vh, 640px)",
-      }}
-    >
+    <div className="flex flex-col rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] overflow-hidden h-full min-h-[420px]">
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-              {daoId
-                ? "Ask your governance agent about proposals or past decisions."
-                : "Your agent is ready. Say something — it will remember."}
+          <div className="h-full flex flex-col items-center justify-center text-center py-8">
+            <div
+              className="w-10 h-10 rounded-[var(--radius)] flex items-center justify-center text-[#09090b] font-bold font-mono mb-4 animate-breathe"
+              style={{ background: "var(--accent)" }}
+            >
+              Q
+            </div>
+            <p className="text-sm text-[var(--text-primary)] font-medium mb-1">
+              {daoId ? "Governance Agent Ready" : "Your Agent is Ready"}
             </p>
+            <p className="text-xs text-[var(--text-tertiary)] mb-6 max-w-xs">
+              {daoId
+                ? "Ask about proposals, past decisions, or conflicts in this DAO."
+                : "Say something — it will remember across every session."}
+            </p>
+            {!daoId && (
+              <div className="flex flex-col gap-2 w-full max-w-xs">
+                {PROMPT_SUGGESTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setInput(s)}
+                    className="text-left text-xs px-3 py-2 rounded-[var(--radius-sm)] border border-[var(--border-subtle)] text-[var(--text-tertiary)] hover:border-[var(--accent-border)] hover:text-[var(--text-secondary)] transition-all duration-150"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -100,20 +115,17 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
 
         {/* Typing indicator */}
         {isLoading && (
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 animate-fade-in">
             <AgentAvatar />
-            <div
-              className="rounded-xl rounded-tl-sm px-4 py-3 max-w-[80%]"
-              style={{ background: "var(--color-muted)" }}
-            >
-              <div className="flex gap-1 items-center h-4">
+            <div className="rounded-[var(--radius-lg)] rounded-tl-sm px-4 py-3 bg-[var(--bg-elevated)]">
+              <div className="flex gap-1 items-center">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="w-1.5 h-1.5 rounded-full animate-bounce"
+                    className="w-1.5 h-1.5 rounded-full"
                     style={{
-                      background: "var(--color-text-muted)",
-                      animationDelay: `${i * 0.15}s`,
+                      background: "var(--accent)",
+                      animation: `pulse-accent 1s ease-in-out ${i * 0.2}s infinite`,
                     }}
                   />
                 ))}
@@ -126,10 +138,7 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
       </div>
 
       {/* Input area */}
-      <div
-        className="border-t p-3 flex items-end gap-2"
-        style={{ borderColor: "var(--color-border)" }}
-      >
+      <div className="border-t border-[var(--border-subtle)] p-3 flex items-end gap-2">
         <textarea
           ref={textareaRef}
           value={input}
@@ -139,21 +148,21 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
           disabled={isLoading}
           rows={1}
           maxLength={4000}
-          className="flex-1 resize-none rounded-lg px-3 py-2 text-sm outline-none transition-colors"
-          style={{
-            background: "var(--color-background)",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text)",
-            minHeight: "40px",
-            maxHeight: "160px",
-          }}
+          className={cn(
+            "flex-1 resize-none rounded-[var(--radius)] px-3 py-2 text-sm",
+            "bg-[var(--bg-elevated)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]",
+            "border border-[var(--border-default)] outline-none",
+            "focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent-muted)]",
+            "transition-all duration-150",
+            "min-h-[40px] max-h-[160px]"
+          )}
           aria-label="Message input"
         />
         <Button
           onClick={() => void handleSend()}
           disabled={!input.trim() || isLoading}
-          size="sm"
-          className="h-10 px-3"
+          size="icon"
+          variant="accent"
           aria-label="Send message"
         >
           <Send className="w-4 h-4" />
@@ -167,43 +176,35 @@ function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
   return (
-    <div
-      className={cn("flex items-start gap-2", isUser && "flex-row-reverse")}
-    >
+    <div className={cn("flex items-start gap-2 animate-slide-up", isUser && "flex-row-reverse")}>
       {!isUser && <AgentAvatar />}
 
-      <div className={cn("flex flex-col gap-1 max-w-[80%]", isUser && "items-end")}>
+      <div className={cn("flex flex-col gap-1 max-w-[82%]", isUser && "items-end")}>
         <div
           className={cn(
-            "rounded-xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
+            "rounded-[var(--radius-lg)] px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words",
             isUser ? "rounded-tr-sm" : "rounded-tl-sm"
           )}
-          style={{
-            background: isUser
-              ? "var(--color-primary)"
-              : "var(--color-muted)",
-            color: isUser
-              ? "var(--color-primary-foreground)"
-              : "var(--color-text)",
-          }}
+          style={
+            isUser
+              ? { background: "var(--accent)", color: "#09090b" }
+              : { background: "var(--bg-elevated)", color: "var(--text-primary)" }
+          }
         >
           {message.content}
         </div>
 
-        {/* Memory badge for assistant messages */}
         {!isUser && (
           <div className="flex items-center gap-1 px-1">
             {message.memoryAnchored ? (
-              <span className="flex items-center gap-1 text-xs"
-                style={{ color: "var(--color-success)" }}>
+              <span className="flex items-center gap-1 text-xs text-[var(--status-live)]">
                 <CheckCircle className="w-3 h-3" />
-                Memory updated
+                Anchored on-chain
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-xs"
-                style={{ color: "var(--color-text-muted)" }}>
+              <span className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
                 <Clock className="w-3 h-3" />
-                Writing to memory...
+                Writing to memory…
               </span>
             )}
           </div>
@@ -216,8 +217,8 @@ function MessageBubble({ message }: { message: Message }) {
 function AgentAvatar() {
   return (
     <div
-      className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 text-white text-xs font-bold"
-      style={{ background: "var(--color-primary)" }}
+      className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] shrink-0 text-[#09090b] text-xs font-bold font-mono"
+      style={{ background: "var(--accent)" }}
       aria-label="Agent"
     >
       Q
