@@ -2,8 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // Security headers on every response
+  // Three.js / R3F ship modern ESM — let Next transpile them (avoids broken dev chunks).
+  transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
+
+  // Security headers: skip in dev so HMR + `/_next/static` are never tangled with strict CSP/nosniff diagnostics.
+  // Production keeps full hardening.
   async headers() {
+    if (process.env.NODE_ENV !== "production") {
+      return [];
+    }
     return [
       {
         source: "/(.*)",
@@ -20,11 +27,11 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval in dev
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
-              "font-src 'self'",
-              "connect-src 'self' https: wss:", // RPC + WS connections
+              "font-src 'self' https://fonts.gstatic.com data:",
+              "connect-src 'self' https: wss: ws:",
               "frame-ancestors 'none'",
             ].join("; "),
           },

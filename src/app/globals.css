@@ -373,3 +373,17 @@ h1, h2, h3, h4 {
 .status-dot.warning { background: var(--status-warning); }
 .status-dot.error { background: var(--status-error); }
 .status-dot.pending { background: var(--text-tertiary); animation: pulse-accent 1.5s ease-in-out infinite; }
+
+/* ── Monad-style landing (blueprint grid) ──────────────────── */
+
+.blueprint-grid-monad {
+  background-image:
+    linear-gradient(rgba(131, 81, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(131, 81, 255, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center top;
+}
+
+[data-landing="monad"] :focus-visible {
+  outline-color: #8351ff;
+}

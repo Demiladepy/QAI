@@ -4,8 +4,9 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { useChat } from "@/hooks/useChat";
 import { useStore } from "@/store";
 import { cn } from "@/lib/utils";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
-import { Send, CheckCircle, Clock, Cpu } from "lucide-react";
+import { Send, CheckCircle, Clock } from "lucide-react";
 import type { Message } from "@/types";
 
 const PROMPT_SUGGESTIONS = [
@@ -60,8 +61,8 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
   if (!agent) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-64 rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] text-center p-8 animate-fade-in">
-        <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--bg-elevated)] flex items-center justify-center mb-4">
-          <Cpu className="w-6 h-6 text-[var(--text-tertiary)]" />
+        <div className="rounded-[var(--radius-lg)] bg-black/50 px-3 py-2 mb-4 flex items-center justify-center">
+          <BrandLogo heightPx={36} className="max-w-[140px]" />
         </div>
         <p className="text-sm font-medium text-[var(--text-primary)] mb-1">Mint your agent first</p>
         <p className="text-xs text-[var(--text-tertiary)]">You need a QAI Agent ID to start chatting</p>
@@ -79,11 +80,8 @@ export function ChatInterface({ daoId, placeholder }: ChatInterfaceProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center py-8">
-            <div
-              className="w-10 h-10 rounded-[var(--radius)] flex items-center justify-center text-[#09090b] font-bold font-mono mb-4 animate-breathe"
-              style={{ background: "var(--accent)" }}
-            >
-              Q
+            <div className="rounded-[var(--radius)] bg-black/45 px-2 py-1.5 mb-4 animate-breathe">
+              <BrandLogo heightPx={32} className="max-w-[120px] mx-auto" />
             </div>
             <p className="text-sm text-[var(--text-primary)] font-medium mb-1">
               {daoId ? "Governance Agent Ready" : "Your Agent is Ready"}
@@ -224,11 +222,10 @@ function MessageBubble({ message }: { message: Message }) {
 function AgentAvatar() {
   return (
     <div
-      className="flex items-center justify-center w-7 h-7 rounded-[var(--radius-sm)] shrink-0 text-[#09090b] text-xs font-bold font-mono"
-      style={{ background: "var(--accent)" }}
-      aria-label="Agent"
+      className="flex items-center justify-center h-7 min-w-[1.75rem] rounded-[var(--radius-sm)] shrink-0 overflow-hidden bg-black/60 px-0.5"
+      aria-label="QAI Agent"
     >
-      Q
+      <BrandLogo heightPx={22} className="max-w-[52px]" />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Activity, LayoutGrid, Scale, Menu, X } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store";
 import { useState } from "react";
@@ -43,16 +44,8 @@ export function Navbar() {
         )}
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div
-            className="w-6 h-6 rounded-md flex items-center justify-center text-[#09090b] text-xs font-bold font-mono"
-            style={{ background: "var(--accent)" }}
-          >
-            Q
-          </div>
-          <span className="text-sm font-bold font-mono tracking-tight text-[var(--text-primary)] hidden sm:block">
-            QAI
-          </span>
+        <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="QAI home">
+          <BrandLogo heightPx={22} className="max-w-[88px] sm:max-w-[100px]" />
         </Link>
 
         {/* Nav links */}

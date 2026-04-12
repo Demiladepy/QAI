@@ -24,6 +24,10 @@ export const metadata: Metadata = {
     "Persistent on-chain AI agent identities powered by 0G Storage, Compute, and TEE.",
   keywords: ["AI", "agents", "blockchain", "0G", "decentralized", "identity", "memory"],
   authors: [{ name: "QAI Protocol" }],
+  icons: {
+    icon: "/logo-qai.png",
+    apple: "/logo-qai.png",
+  },
   openGraph: {
     title: "QAI — Decentralized AI Identity",
     description: "Give your AI agent a persistent on-chain identity and memory.",
@@ -34,7 +38,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#09090b",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({

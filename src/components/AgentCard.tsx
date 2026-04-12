@@ -6,6 +6,7 @@ import { truncateAddress } from "@/lib/utils";
 import { AGENT_REGISTRY_ABI } from "@/lib/abis";
 import { getAgentRegistryAddress, getExplorerTokenUrl } from "@/lib/contracts";
 import { useAgent } from "@/hooks/useAgent";
+import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { AgentCardSkeleton } from "@/components/ui/Skeleton";
@@ -88,8 +89,8 @@ export function AgentCard() {
   if (!agent) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 text-center">
-        <div className="w-12 h-12 rounded-[var(--radius-lg)] flex items-center justify-center mx-auto mb-4 bg-[var(--accent-muted)]">
-          <Cpu className="w-6 h-6" style={{ color: "var(--accent)" }} />
+        <div className="rounded-[var(--radius-lg)] bg-black/50 px-3 py-2 mx-auto mb-4 inline-flex justify-center">
+          <BrandLogo heightPx={40} className="max-w-[160px]" />
         </div>
         <h3 className="text-sm font-semibold font-mono text-[var(--text-primary)] mb-1">No Agent Found</h3>
         <p className="text-xs text-[var(--text-tertiary)] mb-5 leading-relaxed">
