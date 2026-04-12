@@ -36,9 +36,27 @@ describe("AgentRegistry", () => {
     });
 
     it("emits AgentMinted event", async () => {
-      await expect(registry.connect(alice).mint(METADATA_URI))
-        .to.emit(registry, "AgentMinted")
-        .withArgs(1, alice.address, METADATA_URI, await latestTimestamp());
+      const tx = await registry.connect(alice).mint(METADATA_URI);
+      const receipt = await tx.wait();
+      const iface = registry.interface;
+      const event = receipt!.logs
+        .map((log) => {
+          try {
+            return iface.parseLog({
+              topics: log.topics as string[],
+              data: log.data,
+            });
+          } catch {
+            return undefined;
+          }
+        })
+        .find((e) => e?.name === "AgentMinted");
+      expect(event).to.not.be.undefined;
+      expect(event!.args[0]).to.equal(1n);
+      expect(event!.args[1]).to.equal(alice.address);
+      expect(event!.args[2]).to.equal(METADATA_URI);
+      const block = await ethers.provider.getBlock(receipt!.blockNumber);
+      expect(event!.args[3]).to.equal(BigInt(block!.timestamp));
     });
 
     it("reverts when minting a second agent for same wallet", async () => {
@@ -87,9 +105,26 @@ describe("AgentRegistry", () => {
     });
 
     it("emits SessionRecorded event", async () => {
-      await expect(registry.connect(alice).incrementSession(1))
-        .to.emit(registry, "SessionRecorded")
-        .withArgs(1, 1, await latestTimestamp());
+      const tx = await registry.connect(alice).incrementSession(1);
+      const receipt = await tx.wait();
+      const iface = registry.interface;
+      const event = receipt!.logs
+        .map((log) => {
+          try {
+            return iface.parseLog({
+              topics: log.topics as string[],
+              data: log.data,
+            });
+          } catch {
+            return undefined;
+          }
+        })
+        .find((e) => e?.name === "SessionRecorded");
+      expect(event).to.not.be.undefined;
+      expect(event!.args[0]).to.equal(1n);
+      expect(event!.args[1]).to.equal(1n);
+      const block = await ethers.provider.getBlock(receipt!.blockNumber);
+      expect(event!.args[2]).to.equal(BigInt(block!.timestamp));
     });
 
     it("reverts when called by unauthorised address", async () => {
@@ -192,11 +227,4 @@ describe("AgentRegistry", () => {
         .to.be.revertedWithCustomError(registry, "OwnableUnauthorizedAccount");
     });
   });
-
-  // ── Helper ─────────────────────────────────────────────────────────────────
-
-  async function latestTimestamp(): Promise<number> {
-    const block = await ethers.provider.getBlock("latest");
-    return block?.timestamp ?? 0;
-  }
 });

@@ -44,6 +44,10 @@ interface ChatSlice {
   setMode: (mode: AgentMode) => void;
   clearMessages: () => void;
   updateMessageAnchorStatus: (id: string, anchored: boolean) => void;
+  updateMessageMemorySettled: (
+    id: string,
+    hint?: "inactive" | "failed"
+  ) => void;
   setActiveSessionId: (id: string | null) => void;
 }
 
@@ -100,6 +104,14 @@ export const useStore = create<QAIStore>()(
         set((state) => ({
           messages: state.messages.map((m) =>
             m.id === id ? { ...m, memoryAnchored: anchored } : m
+          ),
+        })),
+      updateMessageMemorySettled: (id, hint = "failed") =>
+        set((state) => ({
+          messages: state.messages.map((m) =>
+            m.id === id
+              ? { ...m, memorySettled: true, memoryPersistHint: hint }
+              : m
           ),
         })),
       setActiveSessionId: (activeSessionId) => set({ activeSessionId }),

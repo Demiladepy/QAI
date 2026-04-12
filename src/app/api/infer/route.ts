@@ -7,7 +7,7 @@
 //   - Rate limiting per wallet address (in-memory, stateless-safe)
 //   - All user input sanitized before reaching LLM
 //   - No secrets returned in responses
-//   - Memory writes are fire-and-forget (don't block response)
+//   - Memory writes (KV + log) are awaited with a timeout before response
 // ============================================================
 import { NextRequest, NextResponse } from "next/server";
 import { ethers, keccak256, toUtf8Bytes, solidityPacked } from "ethers";
@@ -19,6 +19,7 @@ import {
   writeSessionToKV,
   appendSessionLog,
   getDAOHistory,
+  isSessionPersistenceConfigured,
 } from "@/lib/memory";
 import { getAgentByOwner } from "@/lib/contracts";
 import type { InferResponse, SessionData, AgentMode } from "@/types";
@@ -27,6 +28,8 @@ import type { InferResponse, SessionData, AgentMode } from "@/types";
 // For production: replace with Redis-backed rate limiter
 
 const RATE_LIMIT_RPM = parseInt(process.env.RATE_LIMIT_RPM ?? "20", 10);
+/** Max wait for 0G KV + log persistence before returning (anchor stays async). */
+const MEMORY_WRITE_TIMEOUT_MS = 12_000;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(walletAddress: string): boolean {
@@ -199,7 +202,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
     body = await req.json();
   } catch {
     return NextResponse.json(
-      { content: "", sessionId: "", memoryWritten: false, error: "Invalid JSON" },
+      {
+        content: "",
+        sessionId: "",
+        memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
+        error: "Invalid JSON",
+      },
       { status: 400 }
     );
   }
@@ -208,7 +217,13 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
   if (!parsed.success) {
     const message = parsed.error.errors.map((e) => e.message).join("; ");
     return NextResponse.json(
-      { content: "", sessionId: "", memoryWritten: false, error: message },
+      {
+        content: "",
+        sessionId: "",
+        memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
+        error: message,
+      },
       { status: 400 }
     );
   }
@@ -223,6 +238,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
         content: "",
         sessionId: "",
         memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
         error: "Rate limit exceeded. Try again in a moment.",
       },
       { status: 429, headers: { "Retry-After": "60" } }
@@ -244,6 +260,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
         content: "",
         sessionId: "",
         memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
         error: "Invalid signature",
       },
       { status: 401 }
@@ -261,6 +278,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
         content: "",
         sessionId: "",
         memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
         error: "Failed to verify agent ownership",
       },
       { status: 503 }
@@ -273,6 +291,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
         content: "",
         sessionId: "",
         memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
         error: "Wallet does not own this agent",
       },
       { status: 403 }
@@ -315,6 +334,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
         content: "",
         sessionId: "",
         memoryWritten: false,
+        persistenceConfigured: isSessionPersistenceConfigured(),
         error: isNotConfigured
           ? "Inference not configured. Set ZEROG_COMPUTE_ENDPOINT in .env.local to connect to 0G Compute."
           : "Inference service unavailable. Please try again.",
@@ -347,21 +367,35 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
     ],
   };
 
-  // ── 9. Write to 0G Storage (async, non-blocking) ─────────────
+  // ── 9. Write to 0G Storage (awaited; bounded by timeout) ────
+  const persistenceConfigured = isSessionPersistenceConfigured();
   let memoryWritten = false;
-  void (async () => {
+  if (persistenceConfigured) {
+    const sessionIndex = Date.now();
     try {
-      // Determine next session index (approximate — real impl uses KV counter)
-      const sessionIndex = Date.now();
-      await Promise.all([
-        writeSessionToKV(agentId, sessionIndex, sessionData),
-        appendSessionLog(agentId, sessionData),
+      const [kvOk, logOk] = await Promise.race([
+        Promise.all([
+          writeSessionToKV(agentId, sessionIndex, sessionData),
+          appendSessionLog(agentId, sessionData),
+        ]),
+        new Promise<[boolean, boolean]>((_, reject) => {
+          setTimeout(
+            () => reject(new Error("memory_write_timeout")),
+            MEMORY_WRITE_TIMEOUT_MS
+          );
+        }),
       ]);
-      memoryWritten = true;
+      memoryWritten = kvOk && logOk;
     } catch (err) {
-      console.error("[/api/infer] Async memory write failed:", err);
+      const msg = (err as Error).message ?? "";
+      if (msg === "memory_write_timeout") {
+        console.error("[/api/infer] Memory write timed out");
+      } else {
+        console.error("[/api/infer] Memory write failed:", err);
+      }
+      memoryWritten = false;
     }
-  })();
+  }
 
   // ── 10. Anchor session hash on-chain (async) ─────────────────
   let anchorTxHash: string | undefined;
@@ -407,6 +441,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<InferResponse
     content: responseContent,
     sessionId,
     memoryWritten,
+    persistenceConfigured,
     anchorTxHash,
   });
 }

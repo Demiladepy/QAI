@@ -66,10 +66,14 @@ Wallet (wagmi + RainbowKit)
 
 ## Contract Addresses (0G Testnet)
 
-| Contract | Address | Explorer |
+After you deploy, paste the printed addresses into `.env.local` as `NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS` and `NEXT_PUBLIC_MEMORY_ANCHOR_ADDRESS`, then rebuild or restart the app.
+
+| Contract | Address (after deploy) | Explorer |
 |---|---|---|
-| AgentRegistry | `[populated by deploy script]` | [View](https://chainscan-galileo.0g.ai) |
-| MemoryAnchor | `[populated by deploy script]` | [View](https://chainscan-galileo.0g.ai) |
+| AgentRegistry | _from `npm run contracts:deploy` output_ | `https://chainscan-galileo.0g.ai/address/<AgentRegistryAddress>` |
+| MemoryAnchor | _from deploy output_ | `https://chainscan-galileo.0g.ai/address/<MemoryAnchorAddress>` |
+
+Replace `<AgentRegistryAddress>` / `<MemoryAnchorAddress>` with your deployed contract addresses (same values as in `.env.local`).
 
 ---
 
@@ -85,7 +89,9 @@ cd contracts && npm install && cd ..
 # 2. Configure environment
 cp .env.local.example .env.local
 # Fill in: DEPLOYER_PRIVATE_KEY, NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
-#          ZEROG_STORAGE_NODE_URL, ZEROG_COMPUTE_ENDPOINT
+#          contract addresses (after deploy), NEXT_PUBLIC_ZEROG_KV_CONTRACT,
+#          INFERENCE_GATEWAY_PRIVATE_KEY, ZEROG_STORAGE_NODE_URL,
+#          ZEROG_COMPUTE_ENDPOINT, optional ZEROG_COMPUTE_API_KEY
 
 # 3. Deploy contracts (local node)
 npm run contracts:deploy:local

@@ -199,7 +199,14 @@ function MessageBubble({ message }: { message: Message }) {
             {message.memoryAnchored ? (
               <span className="flex items-center gap-1 text-xs text-[var(--status-live)]">
                 <CheckCircle className="w-3 h-3" />
-                Anchored on-chain
+                Saved to 0G memory
+              </span>
+            ) : message.memorySettled ? (
+              <span className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">
+                <Clock className="w-3 h-3" />
+                {message.memoryPersistHint === "inactive"
+                  ? "Persistence off — set NEXT_PUBLIC_ZEROG_KV_CONTRACT + INFERENCE_GATEWAY_PRIVATE_KEY"
+                  : "Not saved — check KV, gateway key, or server logs (timeout / SDK)"}
               </span>
             ) : (
               <span className="flex items-center gap-1 text-xs text-[var(--text-tertiary)]">

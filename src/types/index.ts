@@ -45,6 +45,10 @@ export interface Message {
   timestamp: number;
   /** True once the memory write to 0G KV has confirmed */
   memoryAnchored?: boolean;
+  /** True once server finished persistence attempt (success or not) */
+  memorySettled?: boolean;
+  /** When settled without memoryWritten: why persistence did not apply */
+  memoryPersistHint?: "inactive" | "failed";
 }
 
 // ── Inference ─────────────────────────────────────────────────
@@ -63,8 +67,11 @@ export interface InferResponse {
   content: string;
   sessionId: string;
   memoryWritten: boolean;
+  /** KV contract + gateway key are set (writes may still fail) */
+  persistenceConfigured: boolean;
   anchorTxHash?: string;
   error?: string;
+  code?: string;
 }
 
 // ── DAO ───────────────────────────────────────────────────────

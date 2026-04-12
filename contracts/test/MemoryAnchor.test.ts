@@ -37,9 +37,30 @@ describe("MemoryAnchor", () => {
 
     it("emits SessionAnchored event", async () => {
       const hash = makeHash(TOKEN_ID, alice.address, "session content");
-      await expect(anchor.connect(operator).anchorSession(TOKEN_ID, hash, alice.address))
-        .to.emit(anchor, "SessionAnchored")
-        .withArgs(TOKEN_ID, hash, alice.address, await latestTimestamp(), 0);
+      const tx = await anchor
+        .connect(operator)
+        .anchorSession(TOKEN_ID, hash, alice.address);
+      const receipt = await tx.wait();
+      const iface = anchor.interface;
+      const event = receipt!.logs
+        .map((log) => {
+          try {
+            return iface.parseLog({
+              topics: log.topics as string[],
+              data: log.data,
+            });
+          } catch {
+            return undefined;
+          }
+        })
+        .find((e) => e?.name === "SessionAnchored");
+      expect(event).to.not.be.undefined;
+      expect(event!.args[0]).to.equal(BigInt(TOKEN_ID));
+      expect(event!.args[1]).to.equal(hash);
+      expect(event!.args[2]).to.equal(alice.address);
+      const block = await ethers.provider.getBlock(receipt!.blockNumber);
+      expect(event!.args[3]).to.equal(BigInt(block!.timestamp));
+      expect(event!.args[4]).to.equal(0n);
     });
 
     it("reverts on zero hash", async () => {
@@ -125,10 +146,4 @@ describe("MemoryAnchor", () => {
     });
   });
 
-  // ── Helper ─────────────────────────────────────────────────────────────────
-
-  async function latestTimestamp(): Promise<number> {
-    const block = await ethers.provider.getBlock("latest");
-    return block?.timestamp ?? 0;
-  }
 });

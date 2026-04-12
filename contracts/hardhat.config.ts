@@ -15,13 +15,14 @@ if (!DEPLOYER_PRIVATE_KEY && process.env.NODE_ENV !== "test") {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.26",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200,
       },
       viaIR: true,
+      evmVersion: "cancun",
     },
   },
   networks: {

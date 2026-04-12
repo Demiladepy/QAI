@@ -19,6 +19,7 @@ export function useChat() {
     addMessage,
     setLoading,
     updateMessageAnchorStatus,
+    updateMessageMemorySettled,
     mode,
     agent,
   } = useStore();
@@ -93,11 +94,15 @@ export function useChat() {
           memoryAnchored: false,
         });
 
-        // Mark memory as anchored after a short delay (simulates async anchor)
-        if (data.memoryWritten !== false) {
+        if (data.memoryWritten) {
           setTimeout(() => {
             updateMessageAnchorStatus(assistantMsgId, true);
-          }, 1500);
+          }, 800);
+        } else {
+          const hint = data.persistenceConfigured ? "failed" : "inactive";
+          setTimeout(() => {
+            updateMessageMemorySettled(assistantMsgId, hint);
+          }, 400);
         }
       } catch (err) {
         console.error("[useChat] sendMessage error:", err);
@@ -111,7 +116,17 @@ export function useChat() {
         setLoading(false);
       }
     },
-    [address, agent, isLoading, addMessage, setLoading, updateMessageAnchorStatus, mode, signMessageAsync]
+    [
+      address,
+      agent,
+      isLoading,
+      addMessage,
+      setLoading,
+      updateMessageAnchorStatus,
+      updateMessageMemorySettled,
+      mode,
+      signMessageAsync,
+    ]
   );
 
   return { messages, isLoading, sendMessage };

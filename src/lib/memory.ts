@@ -18,25 +18,32 @@ function getStorageConfig() {
   };
 }
 
+/** True when KV + gateway key are set — session writes can be attempted. */
+export function isSessionPersistenceConfigured(): boolean {
+  const { kvContractAddress, privateKey } = getStorageConfig();
+  return !!kvContractAddress && !!privateKey;
+}
+
 // ── 0G KV helpers ─────────────────────────────────────────────
 
 /**
  * Write a session summary to 0G Storage KV.
  * Key: agent:{tokenId}:session:{timestamp}
+ * @returns true if data was written (KV set or log fallback succeeded)
  */
 export async function writeSessionToKV(
   tokenId: string,
   sessionIndex: number,
   sessionData: SessionData
-): Promise<void> {
+): Promise<boolean> {
   const { nodeUrl, kvContractAddress, rpcUrl, privateKey } = getStorageConfig();
   if (!kvContractAddress) {
     console.warn("[MemoryService] KV contract not configured — skipping write");
-    return;
+    return false;
   }
   if (!privateKey) {
     console.warn("[MemoryService] Gateway private key not set — skipping write");
-    return;
+    return false;
   }
 
   const key = buildSessionKey(tokenId, sessionIndex);
@@ -53,7 +60,7 @@ export async function writeSessionToKV(
     const sdk = await import("@0glabs/0g-ts-sdk").catch(() => null);
     if (!sdk) {
       console.warn("[MemoryService] 0g-ts-sdk not available");
-      return;
+      return false;
     }
 
     const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -70,16 +77,16 @@ export async function writeSessionToKV(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (kvClient as any).set(kvContractAddress, keyBytes, valueBytes, signer);
       console.log(`[MemoryService] KV write OK: ${key}`);
+      return true;
     } else {
       // Fallback: use Indexer for log-based storage if KVClient unavailable
       console.warn("[MemoryService] KVClient not in SDK — using log fallback");
-      await appendSessionLog(tokenId, sessionData);
+      return appendSessionLog(tokenId, sessionData);
     }
-
-    void signer; // used above
   } catch (err) {
     // Memory write failure must never crash the inference response
     console.error("[MemoryService] KV write failed:", (err as Error).message);
+    return false;
   }
 }
 
@@ -140,14 +147,15 @@ export async function getRecentContext(
 
 /**
  * Append a full session transcript to the 0G Storage Log layer.
- * Fire-and-forget — used for audit trail and reputation.
+ * Used for audit trail and reputation.
+ * @returns true if an upload was attempted and completed
  */
 export async function appendSessionLog(
   tokenId: string,
   sessionData: SessionData
-): Promise<void> {
+): Promise<boolean> {
   const { nodeUrl, rpcUrl, privateKey } = getStorageConfig();
-  if (!privateKey) return;
+  if (!privateKey) return false;
 
   const key = buildLogKey(tokenId, sessionData.timestamp);
   const payload = JSON.stringify({
@@ -157,7 +165,7 @@ export async function appendSessionLog(
 
   try {
     const sdk = await import("@0glabs/0g-ts-sdk").catch(() => null);
-    if (!sdk) return;
+    if (!sdk) return false;
 
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const signer = new ethers.Wallet(privateKey, provider);
@@ -178,10 +186,14 @@ export async function appendSessionLog(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (indexer as any).upload(zgFile, 0, signer);
         console.log(`[MemoryService] Log append OK: ${key} (${payload.length}B)`);
+        return true;
       }
+      return false;
     }
+    return false;
   } catch (err) {
     console.error("[MemoryService] Log append failed:", (err as Error).message);
+    return false;
   }
 }
 

@@ -55,11 +55,16 @@ export function ConnectionStatus() {
         const res = await fetch("/api/health", { cache: "no-store" });
         if (res.ok && !cancelled) {
           const data = await res.json() as {
-            services: { contracts: boolean; storage: boolean; compute: boolean };
+            services: {
+              contracts: boolean;
+              storage: boolean;
+              compute: boolean;
+              persistenceReady: boolean;
+            };
           };
           updateConnectionStatus({
             inference: data.services.compute ? "connected" : "not_configured",
-            kvStore: data.services.storage ? "connected" : "not_configured",
+            kvStore: data.services.persistenceReady ? "connected" : "not_configured",
           });
         }
       } catch {
